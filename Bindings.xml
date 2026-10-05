@@ -1,0 +1,5 @@
+<Bindings>
+	<Binding name="CURSORFINDER_FIND" header="CURSORFINDER">
+		if CursorFinder and CursorFinder.Cursor then CursorFinder.Cursor:Find() end
+	</Binding>
+</Bindings>

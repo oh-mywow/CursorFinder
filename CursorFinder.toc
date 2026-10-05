@@ -1,0 +1,16 @@
+## Interface: 16001
+## Title: Cursor Finder
+## Notes: Keeps the cursor in sight in a crowded fight: a ring round it, a shake of the mouse to find it, the mob under it named beside it and marked with an arrow. Works with any interface. /cursorfinder
+## Notes-ruRU: Курсор не теряется в толпе мобов: кольцо вокруг него, встряхни мышь — и он найдётся, моб под курсором подписан рядом и отмечен стрелкой. Работает с любым интерфейсом. /cursorfinder
+## IconTexture: Interface\Icons\INV_Misc_Spyglass_03
+## Author: oh-mywow
+## Version: 1.0.0
+## X-License: MIT
+## X-Website: https://github.com/oh-mywow/CursorFinder
+## SavedVariables: CursorFinderDB
+
+Core\Core.lua
+Core\Widgets.lua
+UI\Cursor.lua
+UI\Window.lua
+UI\Launcher.lua
