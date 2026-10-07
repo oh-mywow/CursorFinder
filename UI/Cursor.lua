@@ -1,6 +1,7 @@
--- Cursor Finder — the cursor itself: a ring that follows it, a big ring that closes in on it to find it (a shake of
--- the mouse, the key, the start of a fight), and what is under it — the name, level and health of that unit beside
--- the cursor, an arrow over its nameplate, or the name of the object the game's tooltip shows.
+-- Cursor Finder — the cursor itself: a marker that follows it (a ring, a crosshair, corners, a diamond, a triangle, a
+-- flag, or the Predator's three red dots that close in on an enemy), the same marker big and closing in on it to find
+-- it (a shake of the mouse, the key, the start of a fight), and what is under it — the name, level and health of
+-- that unit beside the cursor, an arrow over its nameplate, or the name of the object the game's tooltip shows.
 --
 -- Secret values (Midnight): the name of a unit may be a secret where the map restricts identities, its health
 -- always is. Both go straight into the sinks that take a secret as it comes (FontString:SetText /
@@ -85,6 +86,112 @@ beacon:SetTexture(MEDIA .. "Ring")
 beacon:SetVertexColor(GOLD[1], GOLD[2], GOLD[3])
 beacon:SetPoint("CENTER")
 beacon:Hide()
+
+-- ---------------------------------------------------------------------------------- the markers
+-- A texture of Media/ (tools/make_media.py draws them, the cursor's tip at the middle, white to be tinted), or the
+-- Predator: three dots turning round the cursor that close in on an enemy under it and lock on (see Hunt below);
+-- its dots take the colour of what is under the cursor as every marker does: gold over nothing, red on an enemy.
+Cursor.SHAPES = {
+	{ key = "predator", name = "Predator", icon = "Predator" },
+	{ key = "ring", name = "Ring", file = "Ring" },
+	{ key = "crosshair", name = "Crosshair", file = "Crosshair" },
+	{ key = "corners", name = "Corners", file = "Corners" },
+	{ key = "diamond", name = "Diamond", file = "Diamond" },
+	{ key = "triangle", name = "Triangle", file = "Triangle" },
+	{ key = "flag", name = "Flag", file = "Flag" },
+}
+
+function Cursor:Shape()
+	local key = ns.Get("shape")
+	for _, shape in ipairs(Cursor.SHAPES) do
+		if shape.key == key then return shape end
+	end
+	return Cursor.SHAPES[1]
+end
+
+local dots, lines = {}, {}
+for index = 1, 3 do
+	local d = ring:CreateTexture(nil, "OVERLAY")
+	d:SetTexture(MEDIA .. "Dot")
+	d:Hide()
+	dots[index] = d
+	local l = ring:CreateLine(nil, "ARTWORK")
+	l:SetThickness(1.5)
+	l:SetColorTexture(1, 1, 1, 1)
+	l:Hide()
+	lines[index] = l
+end
+
+-- The hunt: the dots' angle (degrees) and distance from the tip, how far the lock has gone (0-1), what is under the
+-- cursor ("enemy", "other" or nil) and its colour, set by the look ten times a second; the dots move every frame.
+local hunt = { angle = 0, radius = nil, lock = 0, flash = 0, target = nil, locked = false,
+	colour = { GOLD[1], GOLD[2], GOLD[3] } }
+
+local function huntStep(elapsed, finding, findTime)
+	local size = ns.Get("size")
+	local wide, tight = size * 0.41, size * 0.19
+	local enemy = hunt.target == "enemy"
+	local want = enemy and tight or wide
+	-- found again (a shake, the key): the dots come in from far away
+	if finding > 0 then
+		local t = 1 - finding / findTime
+		want = wide * (1 + 5 * (1 - t) * (1 - t))
+	end
+	hunt.radius = hunt.radius or want
+	hunt.radius = hunt.radius + (want - hunt.radius) * math.min(1, elapsed * 12)
+	if enemy then
+		-- turning to the lock: one dot above the tip, two beside it, clear of the pointer
+		local goal = math.floor(hunt.angle / 120 + 0.5) * 120
+		hunt.angle = hunt.angle + (goal - hunt.angle) * math.min(1, elapsed * 10)
+	else
+		hunt.angle = (hunt.angle + 40 * elapsed) % 360
+	end
+	local close = enemy and math.abs(hunt.radius - tight) < 1.5
+	hunt.lock = hunt.lock + ((close and 1 or 0) - hunt.lock) * math.min(1, elapsed * 14)
+	if close and not hunt.locked then
+		hunt.flash = 0.18
+		if ns.Get("lockSound") and PlaySound then
+			PlaySound(SOUNDKIT and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or 856, "SFX")
+		end
+	end
+	hunt.locked = close
+	hunt.flash = math.max(0, hunt.flash - elapsed)
+
+	local opacity = ns.Get("alpha")
+	-- a little brighter as the lock closes; otherwise as bright as the other markers
+	local alpha = enemy and (0.85 + 0.15 * hunt.lock) or 0.85
+	local r, g, b = hunt.colour[1], hunt.colour[2], hunt.colour[3]
+	local dotSize = math.max(10, size * 0.32) * (1 + 0.6 * hunt.flash / 0.18)
+	local spots = {}
+	for index = 1, 3 do
+		local a = math.rad(hunt.angle - 90 + (index - 1) * 120)
+		-- (the angle runs as on the screen, y downwards; the game's y goes up)
+		local x, y = hunt.radius * math.cos(a), -hunt.radius * math.sin(a)
+		spots[index] = { x, y }
+		local d = dots[index]
+		d:ClearAllPoints()
+		d:SetPoint("CENTER", ring, "CENTER", x, y)
+		d:SetSize(dotSize, dotSize)
+		d:SetVertexColor(r, g, b)
+		d:SetAlpha(alpha * opacity)
+	end
+	for index = 1, 3 do
+		local from, to = spots[index], spots[index % 3 + 1]
+		local l = lines[index]
+		l:SetStartPoint("CENTER", ring, from[1], from[2])
+		l:SetEndPoint("CENTER", ring, to[1], to[2])
+		l:SetColorTexture(r, g, b, 1)
+		l:SetAlpha(0.7 * hunt.lock * opacity)
+	end
+end
+
+local function huntShown(on)
+	for index = 1, 3 do
+		dots[index]:SetShown(on)
+		lines[index]:SetShown(on)
+	end
+	if not on then hunt.radius, hunt.lock, hunt.locked = nil, 0, false end
+end
 
 -- beside the cursor: a small tooltip-like box, kept on the screen
 local LABEL_WIDTH = 176
@@ -275,7 +382,9 @@ function Cursor:Look()
 	-- first the ring itself, from nothing that can fail: the switches, the fight, the camera
 	local show = allowed() and not mouselooking()
 	local wantRing = show and ns.Get("ring") and true or false
-	band:SetShown(wantRing)
+	local predator = self:Shape().key == "predator"
+	band:SetShown(wantRing and not predator)
+	huntShown((wantRing or finding > 0) and predator)
 	ring:SetShown(wantRing or finding > 0)
 
 	-- then what is under the cursor, each part on its own
@@ -287,6 +396,19 @@ function Cursor:Look()
 		if ok then r, g, b = cr, cg, cb end
 	end
 	if ns.Get("tint") then band:SetVertexColor(r, g, b) else band:SetVertexColor(GOLD[1], GOLD[2], GOLD[3]) end
+	-- the Predator's dots the same colour as any marker; they close in on enemies only
+	if ns.Get("tint") then
+		hunt.colour[1], hunt.colour[2], hunt.colour[3] = r, g, b
+	else
+		hunt.colour[1], hunt.colour[2], hunt.colour[3] = GOLD[1], GOLD[2], GOLD[3]
+	end
+	hunt.target = nil
+	if unit then
+		local okHostile, hostile = part("hostile", function()
+			return ask(UnitCanAttack, "player", unit) and not ask(UnitIsDead, unit)
+		end)
+		hunt.target = (okHostile and hostile) and "enemy" or "other"
+	end
 
 	if show and ns.Get("label") then
 		if not part("label", paintLabel, unit, r, g, b) then label:Hide() end
@@ -323,7 +445,12 @@ function Cursor:Find()
 	finding = FIND_TIME
 	lastFind = GetTime()
 	ring:Show()
-	beacon:Show()
+	-- the marker itself closes in on the cursor; the Predator's dots come in from far away (huntStep)
+	if self:Shape().key == "predator" then
+		huntShown(true)
+	else
+		beacon:Show()
+	end
 end
 
 -- a shake: four quick turns of the mouse left and right within 0.8 s, each swing at least 30 units long
@@ -363,11 +490,16 @@ driver:SetScript("OnUpdate", function(_, elapsed)
 	end
 	lastX = x
 
+	if dots[1]:IsShown() then huntStep(elapsed, finding, FIND_TIME) end
 	if finding > 0 then
 		finding = finding - elapsed
 		if finding <= 0 then
 			beacon:Hide()
-			if not band:IsShown() then ring:Hide() end
+			-- (the look that comes next puts back what the switches want)
+			if not band:IsShown() and not (ns.Get("ring") and Cursor:Shape().key == "predator" and allowed()) then
+				ring:Hide()
+				huntShown(false)
+			end
 		else
 			local t = 1 - finding / FIND_TIME
 			local size = math.max(ns.Get("size"), 40) * (1 + 5 * (1 - t) * (1 - t))
@@ -388,6 +520,11 @@ function Cursor:Refresh()
 	local size = ns.Get("size")
 	ring:SetSize(size, size)
 	band:SetAlpha(ns.Get("alpha"))
+	local shape = self:Shape()
+	if shape.file then
+		band:SetTexture(MEDIA .. shape.file)
+		beacon:SetTexture(MEDIA .. shape.file)
+	end
 	labelSide = nil
 	placeLabel()
 	look()

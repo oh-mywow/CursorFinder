@@ -9,11 +9,13 @@ brings it back into view with a shake of the mouse, and names the mob under it.
 
 ## Features
 
-- **A ring round the cursor**, in the colour of what is under it: red for an enemy, yellow for neutral, green for
-  friendly, light blue for a player on your side, grey for the dead or a mob someone else has tagged, gold over
-  nothing. Size and opacity are adjustable.
-- **Find the cursor**: shake the mouse left and right and a big ring closes in on the cursor. The same happens when a
-  fight starts, or on a key of your choice.
+- **A marker round the cursor**, seven to choose from: the **Predator** (three dots turning round the cursor that
+  close in on an enemy under it and lock on in red, with an optional click), a ring, a crosshair, lock-on corners, a
+  diamond, a triangle above the cursor, or a flag planted on its tip. The marker takes the colour of what is under the
+  cursor: red for an enemy, yellow for neutral, green for friendly, light blue for a player on your side, grey for the
+  dead or a mob someone else has tagged, gold over nothing. Size and opacity are adjustable.
+- **Find the cursor**: shake the mouse left and right and the marker, big, closes in on the cursor (the Predator's
+  dots come in from far away). The same happens when a fight starts, or on a key of your choice.
 - **What is under the cursor**: the name, level, rank (elite, rare, boss) and health of the unit under the cursor
   beside it, and whether it is your target. Over a chest, a herb or a door, its name.
 - **An arrow over the mob** you point at, bobbing above its nameplate (needs the game's nameplates on).
@@ -58,7 +60,7 @@ Other clients are untested.
 
 - `tools/deploy.sh` syntax-checks the Lua (with `luajit`, if installed) and copies the addon into a client's AddOns
   folder. Set `WOW_ADDONS` to that folder, or put `WOW_ADDONS="..."` in `tools/deploy.local`, which git ignores.
-- `tools/make_media.py` redraws the two textures in `Media/` (Python 3, no dependencies).
+- `tools/make_media.py` redraws the textures in `Media/` (Python 3, no dependencies).
 
 ## License
 

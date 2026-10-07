@@ -1,4 +1,4 @@
--- Cursor Finder — its own buttons to open it: a round button on the minimap's rim — a click opens the window, a right-click turns the ring on or off, dragged it goes round the map —
+-- Cursor Finder — its own buttons to open it: a round button on the minimap's rim — a click opens the window, a right-click turns the marker on or off, dragged it goes round the map —
 -- and a page in the game's own settings (Options → AddOns → Cursor Finder) with the same button and the switch for
 -- the minimap one.
 local ADDON, ns = ...
@@ -36,7 +36,7 @@ local function tooltip(button)
 	GameTooltip:SetOwner(button, "ANCHOR_LEFT")
 	GameTooltip:SetText("Cursor Finder", W.GOLD[1], W.GOLD[2], W.GOLD[3])
 	GameTooltip:AddLine("Click: the window", 1, 1, 1)
-	GameTooltip:AddLine("Right-click: the ring round the cursor on or off", 1, 1, 1)
+	GameTooltip:AddLine("Right-click: the marker round the cursor on or off", 1, 1, 1)
 	GameTooltip:AddLine("Drag: move round the minimap", 0.6, 0.6, 0.6)
 	GameTooltip:Show()
 end
@@ -105,7 +105,7 @@ local function BuildPage()
 	about:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -8)
 	about:SetPoint("RIGHT", page, "RIGHT", -16, 0)
 	about:SetWordWrap(true)
-	about:SetText("The cursor kept in sight in a crowded fight: a ring round it in the colour of what is under it, a shake of the mouse that shows where it is, the name and health of the mob under it beside it and an arrow over that mob.")
+	about:SetText("The cursor kept in sight in a crowded fight: a marker round it (the Predator's three red dots that lock on to an enemy, a ring, a crosshair, corners and more) in the colour of what is under it, a shake of the mouse that shows where it is, the name and health of the mob under it beside it and an arrow over that mob.")
 
 	local open = W.Button(page, "Open Cursor Finder", 200, 24)
 	open:SetPoint("TOPLEFT", about, "BOTTOMLEFT", 0, -16)
@@ -122,7 +122,7 @@ local function BuildPage()
 
 	local slash = W.Text(page, "GameFontDisableSmall")
 	slash:SetPoint("TOPLEFT", check, "BOTTOMLEFT", 2, -12)
-	slash:SetText("/cursorfinder — the window; /cursorfinder find — show where the cursor is; /cursorfinder on|off — the ring; /cursorfinder minimap — this button on or off; /cursorfinder why — why the ring is shown or not")
+	slash:SetText("/cursorfinder — the window; /cursorfinder find — show where the cursor is; /cursorfinder on|off — the marker; /cursorfinder minimap — this button on or off; /cursorfinder why — why the marker is shown or not")
 
 	local category = Settings.RegisterCanvasLayoutCategory(page, "Cursor Finder")
 	Settings.RegisterAddOnCategory(category)

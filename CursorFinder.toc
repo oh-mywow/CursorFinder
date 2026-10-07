@@ -4,7 +4,7 @@
 ## Notes-ruRU: Курсор не теряется в толпе мобов: кольцо вокруг него, встряхни мышь — и он найдётся, моб под курсором подписан рядом и отмечен стрелкой. Работает с любым интерфейсом. /cursorfinder
 ## IconTexture: Interface\Icons\INV_Misc_Spyglass_03
 ## Author: oh-mywow
-## Version: 1.0.0
+## Version: 1.1.0
 ## X-License: MIT
 ## X-Website: https://github.com/oh-mywow/CursorFinder
 ## SavedVariables: CursorFinderDB

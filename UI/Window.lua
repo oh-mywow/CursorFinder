@@ -1,5 +1,6 @@
--- Cursor Finder — its window (/cursorfinder, the minimap button, or Options → AddOns): the ring, finding the cursor,
--- what is shown of the unit under it, and when all of it is on. The settings themselves live in Core.lua.
+-- Cursor Finder — its window (/cursorfinder, the minimap button, or Options → AddOns): the marker (its shape, picked
+-- from a row of icons, its colour, size and opacity), finding the cursor, what is shown of the unit under it, and when
+-- all of it is on. The settings themselves live in Core.lua.
 local ADDON, ns = ...
 local W = ns.W
 local GOLD = W.GOLD
@@ -50,6 +51,43 @@ local function stepper(frame, label, anchor, key, step, low, high, show)
 	return text
 end
 
+local MEDIA = [[Interface\AddOns\]] .. ADDON .. [[\Media\]]
+local ICON, ICON_GAP = 34, 8
+
+-- one marker of the row: its picture (gold), its name on hover, a click chooses it
+local function shapeButton(frame, shape, index, anchor)
+	local b = CreateFrame("Button", nil, frame)
+	b:SetSize(ICON, ICON)
+	b:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", (index - 1) * (ICON + ICON_GAP), -8)
+	b.tex = b:CreateTexture(nil, "ARTWORK")
+	b.tex:SetAllPoints()
+	b.tex:SetTexture(MEDIA .. (shape.file or shape.icon))
+	b.tex:SetVertexColor(GOLD[1], GOLD[2], GOLD[3])
+	b:SetHighlightTexture([[Interface\Buttons\ButtonHilight-Square]], "ADD")
+	-- the one chosen: the action bars' gold glow round it
+	b.mark = b:CreateTexture(nil, "OVERLAY")
+	b.mark:SetTexture([[Interface\Buttons\UI-ActionButton-Border]])
+	b.mark:SetBlendMode("ADD")
+	b.mark:SetPoint("CENTER")
+	b.mark:SetSize(ICON * 1.75, ICON * 1.75)
+	b.key = shape.key
+	b:SetScript("OnClick", function(self)
+		ns.Set("shape", self.key)
+		Window:Paint()
+	end)
+	b:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+		GameTooltip:SetText(shape.name, 1, 1, 1)
+		if shape.key == "predator" then
+			GameTooltip:AddLine("Three dots turn round the cursor and close in on an enemy under it: red, locked on.",
+				GOLD[1], GOLD[2], GOLD[3], true)
+		end
+		GameTooltip:Show()
+	end)
+	b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+	return b
+end
+
 local function Build()
 	local frame = W.Window("CursorFinderWindow", "Cursor Finder")
 	frame:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
@@ -72,19 +110,24 @@ local function Build()
 	top:SetSize(1, 1)
 	top:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -30)
 
-	-- the ring
-	local ringHead = heading(frame, "The ring", top, 0)
-	local ring = check("A ring round the cursor", "ring", ringHead, -2, -4)
+	-- the marker: its shape, then whether it is shown, its colour, the Predator's click, its size and opacity
+	local ringHead = heading(frame, "The marker", top, 0)
+	frame.shapes = {}
+	for index, shape in ipairs(ns.Cursor.SHAPES) do
+		frame.shapes[index] = shapeButton(frame, shape, index, ringHead)
+	end
+	local ring = check("A marker round the cursor", "ring", frame.shapes[1], -2, -8)
 	local tint = check("In the colour of what is under it", "tint", ring)
-	local tintNote = note(frame, tint, "Red: an enemy, yellow: neutral, green: friendly, blue: a player on your side, grey: dead or tagged by someone else, gold: nothing.", 0, 30)
-	local size = stepper(frame, "Ring size", tintNote, "size", 8, 32, 128, function(v) return ("%d"):format(v) end)
-	size:SetPoint("TOPLEFT", tintNote, "BOTTOMLEFT", -28, -12)
-	local alpha = stepper(frame, "Ring opacity", size, "alpha", 0.1, 0.2, 1,
+	local tintNote = note(frame, tint, "Red: an enemy, yellow: neutral, green: friendly, blue: a player on your side, grey: dead or tagged by someone else, gold: nothing. The Predator's dots close in and lock on to enemies only.", 0, 30)
+	local click = check("Predator: a click when it locks on", "lockSound", tintNote, -30, -4)
+	local size = stepper(frame, "Marker size", click, "size", 8, 32, 128, function(v) return ("%d"):format(v) end)
+	size:SetPoint("TOPLEFT", click, "BOTTOMLEFT", 2, -10)
+	local alpha = stepper(frame, "Marker opacity", size, "alpha", 0.1, 0.2, 1,
 		function(v) return ("%d%%"):format(math.floor(v * 100 + 0.5)) end)
 
 	-- finding it
 	local findHead = heading(frame, "Finding the cursor", alpha, 18)
-	local shake = check("Shake the mouse: a big ring closes in on the cursor", "shake", findHead, -2, -4)
+	local shake = check("Shake the mouse: the marker, big, closes in on the cursor", "shake", findHead, -2, -4)
 	local pull = check("The same when a fight starts", "pull", shake)
 	local now = W.Button(frame, "Show me now", 150, 22)
 	now:SetPoint("TOPLEFT", pull, "BOTTOMLEFT", 4, -6)
@@ -117,6 +160,8 @@ function Window:Paint()
 	local frame = self.frame
 	if not frame then return end
 	for _, c in ipairs(frame.checks) do c:SetOn(ns.Get(c.key)) end
+	local chosen = ns.Cursor:Shape().key
+	for _, b in ipairs(frame.shapes) do b.mark:SetShown(b.key == chosen) end
 	for _, paint in ipairs(frame.paints) do paint() end
 end
 
