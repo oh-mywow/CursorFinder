@@ -2,10 +2,10 @@
 
 A World of Warcraft addon that keeps the mouse cursor in sight in a crowded fight, and shows what it points at.
 
-In a dungeon pull with a dozen mobs on screen the cursor is easy to lose. Cursor Finder puts a ring round it,
+In a dungeon pull with a dozen mobs on screen the cursor is easy to lose. Cursor Finder puts a marker round it,
 brings it back into view with a shake of the mouse, and names the mob under it.
 
-![The ring, the label and the arrow over an elite mob](screenshots/in-game.png)
+![The Predator locked on to an enemy, its name, level and health beside the cursor](screenshots/predator-lock.png)
 
 ## Features
 
@@ -22,6 +22,10 @@ brings it back into view with a shake of the mouse, and names the mob under it.
 - **Only when you need it**: all of it can be limited to fights, or to dungeons, raids and scenarios.
 - Hides while you turn the camera with a mouse button held, as the cursor itself does.
 - Blizzard's own look: the default interface's windows, buttons and colours, so it fits any UI.
+
+![The Predator waiting: gold dots turning round the cursor](screenshots/predator-idle.png)
+
+![The ring, the label and the arrow over an elite mob](screenshots/in-game.png)
 
 ![The settings window](screenshots/settings.png)
 
